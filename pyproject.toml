@@ -21,7 +21,6 @@ classifiers = [
 ]
 dependencies = [
     # Compatibility constraints
-    "chardet>=5.2.0",
     "httpx[cli]>=0.28.1",
     "invenio-app-rdm>=12.0.0,<14.0.0",
     # Usage
@@ -47,6 +46,7 @@ dev = [
     "check-manifest>=0.49",
     "invenio-search[opensearch2]",
     "invoke>=2.2,<3.0",
+    "pytest-asyncio>=1.2.0",
     "pytest-invenio>=3.4.2",
 ]
 
@@ -80,3 +80,6 @@ testpaths = ["tests", "invenio_analytics_importer"]
 
 [tool.pydocstyle]
 add_ignore = ["D401", "D403"]
+
+[tool.isort]
+profile = "black"
