@@ -6,20 +6,14 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-import json
-
 from invenio_search import current_search_client
-
-from invenio_analytics_importer.cache import Cache
-from invenio_analytics_importer.ingest import ingest_download_analytics_from_filepaths
 from invenio_search.engine import dsl
 
-
-def write_json(filepath, content):
-    """Write json filepath."""
-    with open(filepath, "w") as f:
-        json.dump(content, f)
-    return filepath
+from invenio_analytics_importer.cache import Cache
+from invenio_analytics_importer.ingest import (
+    ingest_download_analytics_from_filepaths,
+)
+from invenio_analytics_importer.write import write_json
 
 
 def fill_cache(cache, record, file_key):
@@ -32,9 +26,13 @@ def fill_cache(cache, record, file_key):
     cache.set_size(file_id, 9)
 
 
-def test_ingest_analytics_from_filepaths(running_app, record_factory, tmp_path):
+def test_ingest_analytics_from_filepaths(
+    running_app, record_factory, tmp_path
+):
     # Prepare records
-    r1 = record_factory.create_record(filenames=["PNB-7-75.txt", "PNB 7 76.txt"])
+    r1 = record_factory.create_record(
+        filenames=["PNB-7-75.txt", "PNB 7 76.txt"]
+    )
     r2 = record_factory.create_record(filenames=["coffee.assess.nobmi.txt"])
     r2.index.refresh()  # r2 and r1 share same index
 
@@ -44,14 +42,14 @@ def test_ingest_analytics_from_filepaths(running_app, record_factory, tmp_path):
         {
             "2024-08-30": [
                 {
-                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB-7-75.txt?download=1",
+                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB-7-75.txt?download=1",  # noqa
                     "nb_hits": 1,
                     "nb_uniq_visitors": 1,
                     "nb_visits": 1,
                     "sum_time_spent": 0,
                 },
                 {
-                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB 7 76.txt?download=1",
+                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB 7 76.txt?download=1",  # noqa
                     "nb_hits": 1,
                     "nb_uniq_visitors": 1,
                     "nb_visits": 1,
@@ -65,21 +63,21 @@ def test_ingest_analytics_from_filepaths(running_app, record_factory, tmp_path):
         {
             "2024-09-01": [
                 {
-                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB 7 76.txt?download=1",
+                    "label": f"prism.northwestern.edu/records/{r1.pid.pid_value}/files/PNB 7 76.txt?download=1",  # noqa
                     "nb_hits": 1,
                     "nb_uniq_visitors": 1,
                     "nb_visits": 1,
                     "sum_time_spent": 0,
                 },
                 {
-                    "label": f"prism.northwestern.edu/records/{r2.pid.pid_value}/files/coffee.assess.nobmi.txt?download=1",
+                    "label": f"prism.northwestern.edu/records/{r2.pid.pid_value}/files/coffee.assess.nobmi.txt?download=1",  # noqa
                     "nb_hits": 3,
                     "nb_uniq_visitors": 1,
                     "nb_visits": 2,
                     "sum_time_spent": 0,
                 },
             ]
-        }
+        },
     )
     filepaths = [fp1, fp2]
 

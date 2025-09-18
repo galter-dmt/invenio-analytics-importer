@@ -87,10 +87,10 @@ async def retrieve_analytics(
     async with httpx.AsyncClient() as client:
         api_client = MatomoAnalytics(client, base_url, site_id, token)
 
-        for year_month, days in days_by_year_month:
-            year, month = year_month
+        for year_month, days in days_by_year_month.items():
+            year, _, month = year_month.partition("-")
             downloads = await get_downloads_per_day(api_client, days)
             write_json(
-                output_dir / f"downloads_{year:4}_{month:02}.json",
+                output_dir / f"downloads_{year}_{month}.json",
                 downloads,
             )

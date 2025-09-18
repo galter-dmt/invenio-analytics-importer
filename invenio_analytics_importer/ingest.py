@@ -6,12 +6,16 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-from datetime import datetime, timezone
+"""Ingest analytics into InvenioRDM's stats indices."""
 
-from invenio_analytics_importer.convert import iter_to_entries_of_download_analytics
+from datetime import datetime, timezone
 
 from invenio_search import current_search_client
 from invenio_search.engine import search
+
+from invenio_analytics_importer.convert import (
+    iter_to_entries_of_download_analytics,
+)
 
 
 def to_download(entry, cache):

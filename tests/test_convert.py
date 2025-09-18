@@ -6,8 +6,9 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-from invenio_analytics_importer.convert import EntryOfDownloadFromAnalytics
 import pytest
+
+from invenio_analytics_importer.convert import EntryOfDownloadFromAnalytics
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def entry_analytics_raw():
     return (
         "2024-08-30",
         {
-            "label": "prism.northwestern.edu/records/3s45v-k5m55/files/coffee.assess.bmi.gz?download=1",
+            "label": "prism.northwestern.edu/records/3s45v-k5m55/files/coffee.assess.bmi.gz?download=1",  # noqa
             "nb_hits": 5,
             "nb_uniq_visitors": 2,
             "nb_visits": 3,

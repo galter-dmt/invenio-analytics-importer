@@ -9,8 +9,15 @@ pip install invenio-analytics-importer
 
 ## Usage
 
+**Retrieve analytics**
+
+```bash
+pipenv run invenio analytics_importer retrieve --from <YYYY-MM-DD> --to <YYYY-MM-DD> --output-dir <path>/<to>/<data>/
+```
+
+
 **Ingest**
 
 ```bash
-uv run invenio analytics_importer ingest -f stats_for_downloads_1.json -f stats_for_downloads_2.json
+pipenv run invenio analytics_importer ingest -f <stats file 1> -f <<stats file 2> ...
 ```

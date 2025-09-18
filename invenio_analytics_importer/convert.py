@@ -6,6 +6,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
+"""Convert data from one format to another."""
+
 import dataclasses
 import re
 
@@ -46,5 +48,6 @@ class EntryOfDownloadFromAnalytics:
 
 def iter_to_entries_of_download_analytics(filepaths):
     """Iterable of download actions as fully formed input to search engine."""
-    for year_month_day, raw_analytics in iter_day_analytics_from_filepaths(filepaths):
-        yield EntryOfDownloadFromAnalytics.create(year_month_day, raw_analytics)
+    day_analytics = iter_day_analytics_from_filepaths(filepaths)
+    for year_month_day, analytics in day_analytics:
+        yield EntryOfDownloadFromAnalytics.create(year_month_day, analytics)
