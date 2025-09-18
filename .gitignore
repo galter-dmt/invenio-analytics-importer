@@ -6,3 +6,5 @@ __pycache__/
 uv.lock
 # pytest
 .pytest_cache
+# coverage
+.coverage

@@ -6,7 +6,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-import json
+"""Conftest."""
+
 import io
 
 import pytest
@@ -30,7 +31,7 @@ def app_config(app_config):
             "JSONSCHEMAS_HOST": "not-used",
             # Disable DATACITE.
             "DATACITE_ENABLED": False,
-            "RECORDS_REFRESOLVER_CLS": ("invenio_records.resolver.InvenioRefResolver"),
+            "RECORDS_REFRESOLVER_CLS": ("invenio_records.resolver.InvenioRefResolver"),  # noqa
             "RECORDS_REFRESOLVER_STORE": (
                 "invenio_jsonschemas.proxies.current_refresolver_store"
             ),
@@ -213,12 +214,6 @@ def record_factory(db, uploader, minimal_record, location):
             # publish and get record
             result_item = service.publish(idty, draft.id)
             record = result_item._record
-            # if community:
-            #     community_record = community._record
-            #     record.parent.communities.add(community_record, default=False)
-            #     record.parent.commit()
-            #     db.session.commit()
-            #     service.indexer.index(record, arguments={"refresh": True})
 
             return record
 

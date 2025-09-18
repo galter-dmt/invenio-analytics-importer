@@ -6,13 +6,17 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
+"""Cache of data needed for ingestion work."""
+
 from invenio_db import db
 from invenio_rdm_records.records import RDMRecord
 from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from sqlalchemy import select
 
-from invenio_analytics_importer.convert import iter_to_entries_of_download_analytics  # noqa
+from invenio_analytics_importer.convert import (
+    iter_to_entries_of_download_analytics,
+)
 
 
 def scan_records(record_cls, pids):
