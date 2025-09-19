@@ -26,7 +26,7 @@ class MatomoAnalytics:
     site_id: int
     token_auth: str
 
-    async def get_downloads_for_day(self, day):
+    async def get_analytics_for_day(self, method, day):
         """Get downloads for given YYYY-MM-DD in json format.
 
         Response format:
@@ -45,7 +45,7 @@ class MatomoAnalytics:
             "idSite": self.site_id,
             "period": "day",
             "date": day,
-            "method": "Actions.getDownloads",
+            "method": method,
             "flat": 1,
             "showMetadata": 0,
         }
@@ -69,15 +69,25 @@ class MatomoAnalytics:
         return results
 
 
-async def get_downloads_per_day(api_client, days):
-    """Batch retrieve downloads per day as dict."""
-    downloads = await asyncio.gather(
+async def get_analytics_per_day(api_client, action, days):
+    """Batch retrieve an action analytics per day as dict."""
+    analytics = await asyncio.gather(
         *[
-            api_client.get_downloads_for_day(day)
+            api_client.get_analytics_for_day(action, day)
             for day in days
         ]
     )
-    return dict(zip(days, downloads))
+    return dict(zip(days, analytics))
+
+
+async def get_downloads_per_day(api_client, days):
+    """Batch retrieve downloads per day as dict."""
+    return await get_analytics_per_day(api_client, "Actions.getDownloads", days)  # noqa
+
+
+async def get_views_per_day(api_client, days):
+    """Batch retrieve downloads per day as dict."""
+    return await get_analytics_per_day(api_client, "Actions.getPageUrls", days)
 
 
 async def retrieve_analytics(
@@ -89,8 +99,15 @@ async def retrieve_analytics(
 
         for year_month, days in days_by_year_month.items():
             year, _, month = year_month.partition("-")
+
             downloads = await get_downloads_per_day(api_client, days)
             write_json(
                 output_dir / f"downloads_{year}_{month}.json",
                 downloads,
+            )
+
+            views = await get_views_per_day(api_client, days)
+            write_json(
+                output_dir / f"views_{year}_{month}.json",
+                views,
             )
