@@ -11,11 +11,9 @@
 import dataclasses
 import re
 
-from .read import iter_day_analytics_from_filepaths
-
 
 @dataclasses.dataclass
-class EntryOfDownloadFromAnalytics:
+class DownloadAnalytics:
     """Intermediate representation."""
 
     year_month_day: str  # keeping it simple for now
@@ -37,7 +35,7 @@ class EntryOfDownloadFromAnalytics:
         regex_key = re.compile(r"/files/([^?]*)\?download=1")
         file_key = regex_key.search(label).group(1)
 
-        return EntryOfDownloadFromAnalytics(
+        return cls(
             year_month_day=year_month_day,
             pid=pid,
             file_key=file_key,
@@ -46,8 +44,6 @@ class EntryOfDownloadFromAnalytics:
         )
 
 
-def iter_to_entries_of_download_analytics(filepaths):
-    """Iterable of download actions as fully formed input to search engine."""
-    day_analytics = iter_day_analytics_from_filepaths(filepaths)
-    for year_month_day, analytics in day_analytics:
-        yield EntryOfDownloadFromAnalytics.create(year_month_day, analytics)
+def generate_download_analytics(raw_analytics):
+    for year_month_day, raw in raw_analytics:
+        yield DownloadAnalytics.create(year_month_day, raw)

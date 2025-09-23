@@ -8,11 +8,13 @@
 
 import pytest
 
-from invenio_analytics_importer.convert import EntryOfDownloadFromAnalytics
+from invenio_analytics_importer.convert import (
+    generate_download_analytics,
+)
 
 
 @pytest.fixture
-def entry_analytics_raw():
+def download_analytics_raw():
     """Raw Matamo analytics entry."""
     return (
         "2024-08-30",
@@ -26,8 +28,9 @@ def entry_analytics_raw():
     )
 
 
-def test_entry_create(entry_analytics_raw):
-    entry = EntryOfDownloadFromAnalytics.create(*entry_analytics_raw)
+def test_generate_download_analytics(download_analytics_raw):
+    analytics = list(generate_download_analytics([download_analytics_raw]))
+    entry = analytics[0]
 
     assert entry.pid == "3s45v-k5m55"
     assert entry.file_key == "coffee.assess.bmi.gz"

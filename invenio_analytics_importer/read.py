@@ -17,7 +17,8 @@ def read_json(filepath):
         return json.load(f)
 
 
-def iter_day_analytics_from_filepaths(filepaths):
+# def iter_day_analytics_from_filepaths(filepaths):
+def read_raw_analytics_from_filepaths(filepaths):
     """Iterate (YYYY-MM-DD, analytic) from all filepaths."""
     for fp in filepaths:
         analytics_from_fp = read_json(fp)
