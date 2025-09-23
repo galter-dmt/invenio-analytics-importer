@@ -14,34 +14,6 @@ from invenio_search import current_search_client
 from invenio_search.engine import search
 
 
-def to_view(entry, cache):
-    """To view."""
-    recid = entry.pid
-    year_month_day = entry.year_month_day
-    event_name = "record-view"
-    year_month = year_month_day.rsplit("-", 1)[0]
-    count = entry.views
-    unique_count = entry.visits
-    parent_recid = cache.get_parent_pid(recid)
-
-    return {
-        "_id": f"ui_{recid}-{year_month_day}",
-        "_index": f"stats-{event_name}-{year_month}",
-        "_source": {
-            # Since those entries are synthetic anyway, we place them at
-            # the start of the day
-            "timestamp": f"{year_month_day}T00:00:00",
-            "unique_id": f"ui_{recid}",
-            "count": count,
-            "updated_timestamp": datetime.now(timezone.utc).isoformat(),
-            "unique_count": unique_count,
-            "recid": recid,
-            "parent_recid": parent_recid,
-            "via_api": False,
-        },
-    }
-
-
 def to_download(entry, cache):
     """To download."""
     file_id = cache.get_file_id(entry.pid, entry.file_key)
