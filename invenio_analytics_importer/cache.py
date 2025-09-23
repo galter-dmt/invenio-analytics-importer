@@ -14,10 +14,6 @@ from invenio_search import current_search_client
 from invenio_search.engine import dsl
 from sqlalchemy import select
 
-from invenio_analytics_importer.convert import (
-    iter_to_entries_of_download_analytics,
-)
-
 
 def scan_records(record_cls, pids):
     """Retrieve SE record."""
@@ -77,13 +73,11 @@ class Cache:
         self._pid_record_to_pid_parent[pid_of_record] = pid_of_parent
 
 
-def generate_cache(filepaths):
-    """Generate cache."""
+def fill_downloads_cache(analytics):
+    """Fill and return a downloads cache."""
     cache = Cache()
 
-    pids_set = set()
-    for entry in iter_to_entries_of_download_analytics(filepaths):
-        pids_set.add(entry.pid)
+    pids_set = set(a.pid for a in analytics)
 
     record_cls = RDMRecord
     uuid_to_pid = {}
@@ -108,13 +102,10 @@ def generate_cache(filepaths):
             cache.set_size(file_id, size)
 
     # Get and populate bucket id
-    stmt = (
-        select(
-            record_cls.model_cls.id,
-            record_cls.model_cls.bucket_id,
-        )
-        .where(record_cls.model_cls.id.in_(list(uuid_to_pid.keys())))
-    )
+    stmt = select(
+        record_cls.model_cls.id,
+        record_cls.model_cls.bucket_id,
+    ).where(record_cls.model_cls.id.in_(list(uuid_to_pid.keys())))
 
     for uuid_of_record, bucket_id in db.session.execute(stmt):
         pid = uuid_to_pid[str(uuid_of_record)]
