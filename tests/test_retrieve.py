@@ -6,6 +6,7 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
+import asyncio
 import dataclasses
 import json
 
@@ -13,8 +14,7 @@ import pytest
 
 from invenio_analytics_importer.retrieve import (
     MatomoAnalytics,
-    get_downloads_per_day,
-    get_views_per_day,
+    fetch_monthly_analytics,
 )
 
 
@@ -62,8 +62,7 @@ class FakeClient:
 
 
 @pytest.mark.asyncio
-async def test_get_downloads_per_day(running_app, record_factory, tmp_path):
-    days = ["2024-08-01", "2024-08-02"]
+async def test_matomo_get_analytics_for_day(running_app):
     analytics_2024_08_01 = [
         {
             "label": f"prism.northwestern.edu/records/paah4-s0w35/files/PNB-7-75.txt?download=1",  # noqa
@@ -83,14 +82,91 @@ async def test_get_downloads_per_day(running_app, record_factory, tmp_path):
     fake_client = FakeClient()
     base_url = "https://matomo.example.org/"
     fake_client.set_response(
-        (base_url, days[0]), json.dumps(analytics_2024_08_01)
+        (base_url, "2024-08-01"),
+        json.dumps(analytics_2024_08_01)
     )
-    fake_client.set_response((base_url, days[1]), "No data available")
+    fake_client.set_response((base_url, "2024-08-02"), "No data available")
     site_id = 3
     token = "token"
-    api_client = MatomoAnalytics(fake_client, base_url, site_id, token)
+    matomo = MatomoAnalytics(fake_client, base_url, site_id, token)
 
-    result = await get_downloads_per_day(api_client, days)
+    # Test with data
+    result = await matomo.get_analytics_for_day("aMethod", "2024-08-01")
 
-    assert analytics_2024_08_01 == result["2024-08-01"]
-    assert [] == result["2024-08-02"]
+    assert analytics_2024_08_01 == result
+
+    # Test when no data available
+    result = await matomo.get_analytics_for_day("aMethod", "2024-08-02")
+
+    assert [] == result
+
+
+class FakeFetcher:
+    """Fetches downloads."""
+
+    def __init__(self):
+        """Constructor."""
+        self._response_data = {}
+
+    def set_response(self, day, json_list):
+        """Register a response."""
+        self._response_data[day] = json_list
+
+    async def fetch_analytics_for_day(self, day):
+        """Fetch download analytics for given day."""
+        return self._response_data.get(day, [])
+
+
+@pytest.mark.asyncio
+async def test_fetch_monthly_analytics():
+    fetcher = FakeFetcher()
+    analytics_2023_12_01 = [
+        {
+            "label": f"prism.northwestern.edu/records/paah4-s0w35/files/PNB-7-75.txt?download=1",  # noqa
+            "nb_hits": 1,
+            "nb_uniq_visitors": 1,
+            "nb_visits": 1,
+            "sum_time_spent": 0,
+        },
+        {
+            "label": f"prism.northwestern.edu/records/t8k1h-p8435/files/PNB 7 76.txt?download=1",  # noqa
+            "nb_hits": 1,
+            "nb_uniq_visitors": 1,
+            "nb_visits": 1,
+            "sum_time_spent": 0,
+        },
+    ]
+    analytics_2024_01_31 = [
+        {
+            "label": f"/files/PNB 7 76.txt?download=1",  # noqa
+            "nb_hits": 4,
+            "nb_uniq_visitors": 3,
+            "nb_visits": 2,
+            "sum_time_spent": 0,
+        },
+    ]
+    # only fill 2 days
+    fetcher.set_response("2023-12-01", analytics_2023_12_01)
+    fetcher.set_response("2024-01-31", analytics_2024_01_31)
+    period = ("2023-12", "2024-01")
+
+    monthly_analytics = []
+    async for e in fetch_monthly_analytics(fetcher, period):
+        monthly_analytics.append(e)
+
+    assert 2 == len(monthly_analytics)
+
+    month, analytics = monthly_analytics[0]
+    print("analytics", analytics)
+    assert "2023-12" == month
+    assert analytics_2023_12_01 == analytics["2023-12-01"]
+    # non filled should just be []
+    # just take 1 random entry
+    assert [] == analytics["2023-12-28"]
+
+    month, analytics = monthly_analytics[1]
+    assert "2024-01" == month
+    assert analytics_2024_01_31 == analytics["2024-01-31"]
+    # non filled should just be []
+    # just take 1 random entry
+    assert [] == analytics["2024-01-02"]
