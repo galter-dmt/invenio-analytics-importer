@@ -9,10 +9,12 @@
 """Retrieve aggregate analytics from provider."""
 
 import asyncio
+import calendar
 import dataclasses
 from typing import Any
 
 import httpx
+from flask import current_app
 
 from invenio_analytics_importer.write import write_json
 
@@ -64,50 +66,89 @@ class MatomoAnalytics:
         if response.text == "No data available":
             return []
 
-        results = response.json()
+        return response.json()
 
-        return results
-
-
-async def get_analytics_per_day(api_client, action, days):
-    """Batch retrieve an action analytics per day as dict."""
-    analytics = await asyncio.gather(
-        *[
-            api_client.get_analytics_for_day(action, day)
-            for day in days
-        ]
-    )
-    return dict(zip(days, analytics))
+    async def fetch_downloads_for_day(self, day):
+        """Fetch downloads analytics for day."""
+        return await self.get_analytics_for_day("Actions.getDownloads", day)
 
 
-async def get_downloads_per_day(api_client, days):
-    """Batch retrieve downloads per day as dict."""
-    return await get_analytics_per_day(api_client, "Actions.getDownloads", days)  # noqa
+class DownloadsFetcher:
+    """Fetches downloads."""
+
+    def __init__(self, client):
+        """Constructor."""
+        self.client = client
+
+    async def fetch_analytics_for_day(self, day):
+        """Fetch download analytics for given day."""
+        return await self.client.fetch_downloads_for_day(day)
 
 
-async def get_views_per_day(api_client, days):
-    """Batch retrieve downloads per day as dict."""
-    return await get_analytics_per_day(api_client, "Actions.getPageUrls", days)
+def generate_days_by_year_month(period):
+    """
+    Yield (YYYY-MM, (YYYY-MM-DD1, ..., YYYY-MM-DDN)) for each month of period.
+
+    :param period: tuple. (date_from, date_to)
+        :param date_from: str. YYYY-MM-DD from inclusive.
+        :param date_to: str. YYYY-MM-DD to inclusive.
+    """
+    date_from, date_to = period
+    tmp = date_from.split("-")
+    year_from, month_from = int(tmp[0]), int(tmp[1])
+    tmp = date_to.split("-")
+    year_to, month_to = int(tmp[0]), int(tmp[1])
+
+    y = year_from
+    m = month_from
+    while (y, m) <= (year_to, month_to):
+        days_in_month = calendar.monthrange(y, m)[1]
+        year_month = f"{y:4}-{m:02}"
+        days = (
+            f"{y:4}-{m:02}-{d:02}" for d in range(1, days_in_month + 1)
+        )
+
+        yield year_month, days
+
+        m += 1
+        if m > 12:
+            y += 1
+            m = 1
 
 
-async def retrieve_analytics(
-    base_url, site_id, token, days_by_year_month, output_dir
-):
-    """Retrieve analytics from provider."""
+async def fetch_monthly_analytics(fetcher, period):
+    """Yield fetched analytics by month (and day within month)."""
+    days_by_yr_m = generate_days_by_year_month(period)
+
+    for year_month, days in days_by_yr_m:
+        days_l = list(days)
+        # This maps to 30~ concurrent network calls at a time which has been
+        # fine so far. It may return lots of data to hold in memory though.
+        # This has been fine for us so far as well, but it's a trade-off in
+        # favor of less files and more understandable periods.
+        analytics_daily = await asyncio.gather(
+            *[fetcher.fetch_analytics_for_day(day) for day in days_l]
+        )
+        analytics_monthly = dict(zip(days_l, analytics_daily))
+        yield year_month, analytics_monthly
+
+
+async def retrieve_period_analytics(provider, kind, period, output_dir):
+    """Framing device."""
     async with httpx.AsyncClient() as client:
-        api_client = MatomoAnalytics(client, base_url, site_id, token)
+        # If other providers, do selection + creation here.
+        # For now, there isn't so no selection logic.
+        client_of_provider = MatomoAnalytics(
+            client,
+            base_url=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_URL"),
+            site_id=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_SITE_ID"),  # noqa
+            token=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_TOKEN"),
+        )
 
-        for year_month, days in days_by_year_month.items():
-            year, _, month = year_month.partition("-")
+        # if kind == "views":
+        #     fetcher = ViewsFetcher(client_of_provider)
+        if kind == "downloads":
+            fetcher = DownloadsFetcher(client_of_provider)
 
-            downloads = await get_downloads_per_day(api_client, days)
-            write_json(
-                output_dir / f"downloads_{year}_{month}.json",
-                downloads,
-            )
-
-            views = await get_views_per_day(api_client, days)
-            write_json(
-                output_dir / f"views_{year}_{month}.json",
-                views,
-            )
+        async for yr_m, analytics in fetch_monthly_analytics(fetcher, period):
+            write_json(analytics, output_dir / f"{kind}_{yr_m}.json")

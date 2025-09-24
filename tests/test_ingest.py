@@ -90,7 +90,7 @@ def test_ingest_statistics(running_app):
                 "timestamp": f"2024-09-03T00:00:00",
                 "unique_id": "1741e723-420a-4023-ad89-7aedebab7bb1_cb297587-b25c-4675-832a-d5d2634551c7",  # noqa
                 "count": 3,
-                "updated_timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                "updated_timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),  # noqa
                 "unique_count": 2,
                 "volume": 27,
                 "file_id": "cb297587-b25c-4675-832a-d5d2634551c7",
@@ -122,7 +122,7 @@ def test_ingest_statistics(running_app):
     assert 1 == result["unique_count"]
     assert "0c8rx-zsn76" == result["recid"]
     assert "by5n4-x1h80" == result["parent_recid"]
-    assert False == result["via_api"]
+    assert result["via_api"] is False
 
     s = dsl.Search(
         using=current_search_client,

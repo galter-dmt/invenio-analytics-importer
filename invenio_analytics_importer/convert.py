@@ -45,5 +45,6 @@ class DownloadAnalytics:
 
 
 def generate_download_analytics(raw_analytics):
+    """Yield DownloadAnalytics entries from raw entries."""
     for year_month_day, raw in raw_analytics:
         yield DownloadAnalytics.create(year_month_day, raw)
