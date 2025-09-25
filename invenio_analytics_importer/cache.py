@@ -112,3 +112,20 @@ def fill_downloads_cache(analytics):
         cache.set_bucket_id(pid, bucket_id)
 
     return cache
+
+
+def fill_views_cache(analytics):
+    """Fill and return a views cache."""
+    cache = Cache()
+
+    pids_set = set(a.pid for a in analytics)
+
+    # Get and populate parent_id
+    record_cls = RDMRecord
+    results = scan_records(record_cls, list(pids_set))
+    for hit in results:
+        pid = hit["id"]
+        pid_of_parent = hit["parent"]["id"]
+        cache.set_parent_pid(pid, pid_of_parent)
+
+    return cache

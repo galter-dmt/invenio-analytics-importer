@@ -27,7 +27,7 @@ dependencies = [
     "invenio-rdm-records",
     "invenio-search",
 ]
-description = "Import analytics from Matomo"
+description = "Import analytics from 3rd-party provider (Matomo) into InvenioRDM instance."
 keywords = ["invenio", "inveniordm", "rdm", "analytics", "statistics", "matomo"]
 license = {file = "LICENSE"}
 name = "invenio-analytics-importer"
@@ -36,8 +36,8 @@ requires-python = ">=3.11"
 urls = {Repository = "https://github.com/galterlibrary/invenio-analytics-importer"}
 version = "0.1.0"
 
-# [project.entry-points."flask.commands"]
-# analytics_importer = "invenio_analytics_importer.cli:analytics"
+[project.entry-points."flask.commands"]
+analytics_importer = "invenio_analytics_importer.cli:analytics"
 
 
 [project.optional-dependencies]

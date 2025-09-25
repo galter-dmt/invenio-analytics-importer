@@ -13,9 +13,10 @@ from invenio_search import current_search_client
 from invenio_search.engine import dsl
 
 from invenio_analytics_importer.cache import Cache
-from invenio_analytics_importer.convert import DownloadAnalytics
+from invenio_analytics_importer.convert import DownloadAnalytics, ViewAnalytics
 from invenio_analytics_importer.ingest import (
     generate_download_stats,
+    generate_view_stats,
     ingest_statistics,
 )
 
@@ -67,6 +68,41 @@ def test_generate_download_stats():
     assert expected == stats[0]
 
 
+def test_generate_view_stats():
+    cache = Cache()
+    cache.set_parent_pid("0c8rx-zsn76", "by5n4-x1h80")
+
+    iter_analytics = [
+        ViewAnalytics(
+            year_month_day="2024-08-30",
+            pid="0c8rx-zsn76",
+            visits=2,
+            views=3,
+        ),
+    ]
+
+    pit = dt.datetime(2025, 9, 23, 0, 0, 0, tzinfo=dt.timezone.utc)
+    with time_machine.travel(pit):
+        stats = list(generate_view_stats(iter_analytics, cache))
+
+    expected = {
+        "_id": f"ui_0c8rx-zsn76-2024-08-30",
+        "_index": f"stats-record-view-2024-08",
+        "_source": {
+            "timestamp": f"2024-08-30T00:00:00",
+            "unique_id": "ui_0c8rx-zsn76",
+            "count": 3,
+            "updated_timestamp": "2025-09-23T00:00:00+00:00",
+            "unique_count": 2,
+            "recid": "0c8rx-zsn76",
+            "parent_recid": "by5n4-x1h80",
+            "via_api": False,
+        },
+    }
+    assert 1 == len(stats)
+    assert expected == stats[0]
+
+
 def test_ingest_statistics(running_app):
     stats_for_ingest = [
         {
@@ -90,7 +126,7 @@ def test_ingest_statistics(running_app):
                 "timestamp": f"2024-09-03T00:00:00",
                 "unique_id": "1741e723-420a-4023-ad89-7aedebab7bb1_cb297587-b25c-4675-832a-d5d2634551c7",  # noqa
                 "count": 3,
-                "updated_timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
+                "updated_timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),  # noqa
                 "unique_count": 2,
                 "volume": 27,
                 "file_id": "cb297587-b25c-4675-832a-d5d2634551c7",
@@ -122,7 +158,7 @@ def test_ingest_statistics(running_app):
     assert 1 == result["unique_count"]
     assert "0c8rx-zsn76" == result["recid"]
     assert "by5n4-x1h80" == result["parent_recid"]
-    assert False == result["via_api"]
+    assert result["via_api"] is False
 
     s = dsl.Search(
         using=current_search_client,
