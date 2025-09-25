@@ -13,7 +13,10 @@ import json
 import pytest
 
 from invenio_analytics_importer.retrieve import (
+    DownloadsFetcher,
     MatomoAnalytics,
+    ProviderClient,
+    ViewsFetcher,
     fetch_monthly_analytics,
 )
 
@@ -99,6 +102,38 @@ async def test_matomo_get_analytics_for_day(running_app):
     result = await matomo.get_analytics_for_day("aMethod", "2024-08-02")
 
     assert [] == result
+
+
+class FakeProviderClient(ProviderClient):
+    """Fave provider client."""
+
+    async def fetch_downloads_for_day(self, day):
+        """Fetch downloads for day."""
+        return [{"downloads": 1}]
+
+    async def fetch_views_for_day(self, day):
+        """Fetch views for day."""
+        return [{"views": 1}]
+
+
+@pytest.mark.asyncio
+async def test_downloads_fetcher():
+    # We are simply testing interfaces here
+    fetcher = DownloadsFetcher(FakeProviderClient())
+
+    results = await fetcher.fetch_analytics_for_day("2024-08-31")
+
+    assert [{"downloads": 1}] == results
+
+
+@pytest.mark.asyncio
+async def test_views_fetcher():
+    # We are simply testing interfaces here
+    fetcher = ViewsFetcher(FakeProviderClient())
+
+    results = await fetcher.fetch_analytics_for_day("2024-08-31")
+
+    assert [{"views": 1}] == results
 
 
 class FakeFetcher:

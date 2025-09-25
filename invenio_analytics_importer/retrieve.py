@@ -8,6 +8,7 @@
 
 """Retrieve aggregate analytics from provider."""
 
+import abc
 import asyncio
 import calendar
 import dataclasses
@@ -19,8 +20,20 @@ from flask import current_app
 from invenio_analytics_importer.write import write_json
 
 
+class ProviderClient(abc.ABC):
+    """Provider client interface."""
+
+    @abc.abstractmethod
+    async def fetch_views_for_day(self, day):
+        """Fetch views for given day."""
+
+    @abc.abstractmethod
+    async def fetch_downloads_for_day(self, day):
+        """Fetch downloads for given day."""
+
+
 @dataclasses.dataclass
-class MatomoAnalytics:
+class MatomoAnalytics(ProviderClient):
     """Matomo API client."""
 
     client: Any
@@ -71,6 +84,22 @@ class MatomoAnalytics:
     async def fetch_downloads_for_day(self, day):
         """Fetch downloads analytics for day."""
         return await self.get_analytics_for_day("Actions.getDownloads", day)
+
+    async def fetch_views_for_day(self, day):
+        """Fetch views analytics for day."""
+        return await self.get_analytics_for_day("Actions.getPageUrls", day)
+
+
+class ViewsFetcher:
+    """Fetches views."""
+
+    def __init__(self, client):
+        """Constructor."""
+        self.client = client
+
+    async def fetch_analytics_for_day(self, day):
+        """Fetch views analytics for given day."""
+        return await self.client.fetch_views_for_day(day)
 
 
 class DownloadsFetcher:
@@ -137,7 +166,7 @@ async def retrieve_period_analytics(provider, kind, period, output_dir):
     """Framing device."""
     async with httpx.AsyncClient() as client:
         # If other providers, do selection + creation here.
-        # For now, there isn't so no selection logic.
+        # For now, there isn't, so no selection logic.
         client_of_provider = MatomoAnalytics(
             client,
             base_url=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_URL"),
@@ -145,10 +174,12 @@ async def retrieve_period_analytics(provider, kind, period, output_dir):
             token=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_TOKEN"),
         )
 
-        # if kind == "views":
-        #     fetcher = ViewsFetcher(client_of_provider)
-        if kind == "downloads":
+        if kind == "views":
+            fetcher = ViewsFetcher(client_of_provider)
+        elif kind == "downloads":
             fetcher = DownloadsFetcher(client_of_provider)
+        else:
+            exit(1)
 
         async for yr_m, analytics in fetch_monthly_analytics(fetcher, period):
             write_json(analytics, output_dir / f"{kind}_{yr_m}.json")
