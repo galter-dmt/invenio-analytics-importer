@@ -6,8 +6,11 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-from invenio_analytics_importer.cache import fill_downloads_cache
-from invenio_analytics_importer.convert import DownloadAnalytics
+from invenio_analytics_importer.cache import (
+    fill_downloads_cache,
+    fill_views_cache,
+)
+from invenio_analytics_importer.convert import DownloadAnalytics, ViewAnalytics
 
 
 def test_fill_downloads_cache(running_app, db, record_factory):
@@ -33,3 +36,21 @@ def test_fill_downloads_cache(running_app, db, record_factory):
     assert r.parent.pid.pid_value == cache.get_parent_pid(pid)
     assert file_model.size == cache.get_size(file_id)
     assert str(r.bucket_id) == cache.get_bucket_id(pid)
+
+
+def test_fill_views_cache(running_app, db, record_factory):
+    r = record_factory.create_record()
+    r.index.refresh()
+    pid = r.pid.pid_value
+    iter_analytics = [
+        ViewAnalytics(
+            year_month_day="2024-09-03",
+            pid=pid,
+            visits=2,
+            views=3,
+        ),
+    ]
+
+    cache = fill_views_cache(iter_analytics)
+
+    assert r.parent.pid.pid_value == cache.get_parent_pid(pid)
