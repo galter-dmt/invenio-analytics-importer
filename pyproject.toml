@@ -15,6 +15,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -24,15 +25,19 @@ dependencies = [
     "httpx[cli]>=0.28.1",
     "invenio-app-rdm>=12.0.0,<14.0.0",
     # Usage
+    "click",
+    "flask",
+    "invenio_db",
     "invenio-rdm-records",
     "invenio-search",
+    "sqlalchemy",
 ]
 description = "Import analytics from 3rd-party provider (Matomo) into InvenioRDM instance."
 keywords = ["invenio", "inveniordm", "rdm", "analytics", "statistics", "matomo"]
 license = {file = "LICENSE"}
 name = "invenio-analytics-importer"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 urls = {Repository = "https://github.com/galterlibrary/invenio-analytics-importer"}
 version = "0.1.0"
 
