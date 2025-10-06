@@ -42,16 +42,15 @@ class MatomoAnalytics(ProviderClient):
     token_auth: str
 
     async def get_analytics_for_day(self, method, day):
-        """Get downloads for given YYYY-MM-DD in json format.
+        """Get analytics for given YYYY-MM-DD in json format.
 
         Response format:
 
         {
-            "label": "example.org/records/0dfv3-cmw61/files/f.pdf?download=1",
+            "label": "example.org/records/0dfv3-cmw61/files/f.pdf?download=1]",
             "nb_hits": 1,
             "nb_uniq_visitors": 1,
             "nb_visits": 1,
-            "sum_time_spent": 0,
         },
         """
         params = {
