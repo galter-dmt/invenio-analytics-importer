@@ -79,7 +79,7 @@ def retrieve(kind, year_month_from, year_month_to, output_dir):
 
     For 'kind' the last --views/--downloads takes precedence.
     """
-    asyncio.run_async(
+    asyncio.run(
         retrieve_period_analytics(
             provider="matomo",  # hardcoded for now
             kind=kind,

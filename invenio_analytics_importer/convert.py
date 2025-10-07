@@ -6,10 +6,37 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-"""Convert data from one format to another."""
+"""Convert data from one format to another.
+
+WARNING: all of the below assumes Matomo output for now.
+"""
 
 import dataclasses
 import re
+
+REGEX_PID = re.compile(r"/records/([^/]*)(?:/|$)")
+REGEX_DOWNLOAD = re.compile(r"\?download=1$")
+
+
+def is_record(analytics_raw):
+    """Return if analytics is for a record."""
+    label = analytics_raw.get("label", "")
+    match = REGEX_PID.search(label)
+    return bool(match.group(1)) if match else False
+
+
+def is_download(analytics_raw):
+    """Return if analytics is for a download.
+
+    Although Matomo returns what it considers a download,
+    this isn't always what we consider a download. For the purposes of
+    InvenioRDM, a download is what Matomo returns + filtering on presence
+    of `download=1` querystring parameter (i.e. not a preview, and always
+    unique/at end of label).
+    """
+    label = analytics_raw.get("label", "")
+    match = REGEX_DOWNLOAD.search(label)
+    return bool(match)
 
 
 @dataclasses.dataclass
@@ -28,8 +55,8 @@ class DownloadAnalytics:
         label = analytics_raw.get("label", "")
 
         # extract "3s45v-k5m55" from ".../records/3s45v-k5m55[/...]"
-        regex_pid = re.compile(r"/records/([^/]*)(?:/|$)")
-        pid = regex_pid.search(label).group(1)
+        # assumes is_record was run on analytics_raw prior to this point
+        pid = REGEX_PID.search(label).group(1)
 
         # extract file key
         regex_key = re.compile(r"/files/([^?]*)\?download=1")
@@ -47,7 +74,8 @@ class DownloadAnalytics:
 def generate_download_analytics(raw_analytics):
     """Yield DownloadAnalytics entries from raw entries."""
     for year_month_day, raw in raw_analytics:
-        yield DownloadAnalytics.create(year_month_day, raw)
+        if is_record(raw) and is_download(raw):
+            yield DownloadAnalytics.create(year_month_day, raw)
 
 
 @dataclasses.dataclass
@@ -65,9 +93,8 @@ class ViewAnalytics:
         label = analytics_raw.get("label", "")
 
         # extract "3s45v-k5m55" from ".../records/3s45v-k5m55[/...]"
-        regex_pid = re.compile(r"/records/([^/]*)(?:/|$)")
-        match = regex_pid.search(label)
-        pid = match.group(1) if match else ""
+        # assumes is_record was run on analytics_raw prior to this point
+        pid = REGEX_PID.search(label).group(1)
 
         return cls(
             year_month_day=year_month_day,
@@ -80,4 +107,5 @@ class ViewAnalytics:
 def generate_view_analytics(raw_analytics):
     """Yield ViewAnalytics entries from raw entries."""
     for year_month_day, raw in raw_analytics:
-        yield ViewAnalytics.create(year_month_day, raw)
+        if is_record(raw):
+            yield ViewAnalytics.create(year_month_day, raw)

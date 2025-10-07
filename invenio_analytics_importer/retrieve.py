@@ -170,7 +170,7 @@ async def retrieve_period_analytics(provider, kind, period, output_dir):
             client,
             base_url=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_URL"),
             site_id=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_SITE_ID"),  # noqa
-            token=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_TOKEN"),
+            token_auth=current_app.config.get("ANALYTICS_IMPORTER_MATOMO_TOKEN"),  # noqa
         )
 
         if kind == "views":
@@ -181,4 +181,4 @@ async def retrieve_period_analytics(provider, kind, period, output_dir):
             exit(1)
 
         async for yr_m, analytics in fetch_monthly_analytics(fetcher, period):
-            write_json(analytics, output_dir / f"{kind}_{yr_m}.json")
+            write_json(output_dir / f"{kind}_{yr_m}.json", analytics)
