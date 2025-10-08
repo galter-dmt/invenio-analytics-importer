@@ -40,6 +40,20 @@ def test_generate_download_stats():
             visits=2,
             views=3,
         ),
+        DownloadAnalytics(
+            year_month_day="2024-09-03",
+            pid="notin-cache",
+            file_key="doesnt_exist.txt",
+            visits=1,
+            views=1,
+        ),
+        DownloadAnalytics(
+            year_month_day="2024-09-03",
+            pid="5ret9-dwz86",  # in cache
+            file_key="doesnt_exist.txt",  # not in cache
+            visits=2,
+            views=2,
+        ),
     ]
 
     pit = dt.datetime(2025, 9, 23, 0, 0, 0, tzinfo=dt.timezone.utc)
@@ -78,6 +92,12 @@ def test_generate_view_stats():
             pid="0c8rx-zsn76",
             visits=2,
             views=3,
+        ),
+        ViewAnalytics(
+            year_month_day="2024-09-23",
+            pid="notin-cache",
+            visits=1,
+            views=1,
         ),
     ]
 
