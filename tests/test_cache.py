@@ -6,6 +6,8 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
+import pytest
+
 from invenio_analytics_importer.cache import (
     fill_downloads_cache,
     fill_views_cache,
@@ -26,6 +28,13 @@ def test_fill_downloads_cache(running_app, db, record_factory):
             visits=2,
             views=3,
         ),
+        DownloadAnalytics(
+            year_month_day="2024-09-03",
+            pid="notin-cache",
+            file_key="doesnt_exist.txt",
+            visits=1,
+            views=1,
+        ),
     ]
 
     cache = fill_downloads_cache(iter_analytics)
@@ -36,6 +45,11 @@ def test_fill_downloads_cache(running_app, db, record_factory):
     assert r.parent.pid.pid_value == cache.get_parent_pid(pid)
     assert file_model.size == cache.get_size(file_id)
     assert str(r.bucket_id) == cache.get_bucket_id(pid)
+
+    with pytest.raises(KeyError):
+        cache.get_parent_pid("notin-cache")
+    with pytest.raises(KeyError):
+        cache.get_file_id("notin-cache", "doesnt_exist.txt")
 
 
 def test_fill_views_cache(running_app, db, record_factory):
@@ -49,8 +63,16 @@ def test_fill_views_cache(running_app, db, record_factory):
             visits=2,
             views=3,
         ),
+        ViewAnalytics(
+            year_month_day="2024-09-03",
+            pid="notin-cache",
+            visits=1,
+            views=1,
+        ),
     ]
 
     cache = fill_views_cache(iter_analytics)
 
     assert r.parent.pid.pid_value == cache.get_parent_pid(pid)
+    with pytest.raises(KeyError):
+        cache.get_parent_pid("notin-cache")

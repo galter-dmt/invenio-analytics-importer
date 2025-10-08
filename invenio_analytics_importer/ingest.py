@@ -14,6 +14,32 @@ from invenio_search import current_search_client
 from invenio_search.engine import search
 
 
+def record_exists(entry, cache):
+    """Checks if the record of passed analytic exists.
+
+    Really this checks if the analytic is for a record in the system and uses
+    the cache as the proxy for that.
+    """
+    try:
+        # This would work for views or downloads, so is used to assess presence
+        # in cache (assumes some knowledge of how cache is filled)
+        return cache.get_parent_pid(entry.pid) is not None
+    except KeyError:
+        return False
+
+
+def file_key_exists(entry, cache):
+    """Checks if the file key of passed analytic exists.
+
+    Really this checks if the file of the record exists in the system and uses
+    the cache as the proxy for that.
+    """
+    try:
+        return cache.get_file_id(entry.pid, entry.file_key) is not None
+    except KeyError:
+        return False
+
+
 def to_download(entry, cache):
     """To download."""
     file_id = cache.get_file_id(entry.pid, entry.file_key)
@@ -52,7 +78,8 @@ def to_download(entry, cache):
 def generate_download_stats(analytics, cache):
     """Generator for download statistics actions."""
     for analytic in analytics:
-        yield to_download(analytic, cache)
+        if record_exists(analytic, cache) and file_key_exists(analytic, cache):
+            yield to_download(analytic, cache)
 
 
 def to_view(entry, cache):
@@ -86,7 +113,8 @@ def to_view(entry, cache):
 def generate_view_stats(analytics, cache):
     """Generator for view statistics actions."""
     for analytic in analytics:
-        yield to_view(analytic, cache)
+        if record_exists(analytic, cache):
+            yield to_view(analytic, cache)
 
 
 def ingest_statistics(actions):
