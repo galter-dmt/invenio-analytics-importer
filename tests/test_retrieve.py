@@ -6,7 +6,6 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 
-import asyncio
 import dataclasses
 import json
 
@@ -173,7 +172,7 @@ async def test_fetch_monthly_analytics():
     ]
     analytics_2024_01_31 = [
         {
-            "label": f"/files/PNB 7 76.txt?download=1",  # noqa
+            "label": f"/files/PNB 7 76.txt?download=1",
             "nb_hits": 4,
             "nb_uniq_visitors": 3,
             "nb_visits": 2,
@@ -192,7 +191,6 @@ async def test_fetch_monthly_analytics():
     assert 2 == len(monthly_analytics)
 
     month, analytics = monthly_analytics[0]
-    print("analytics", analytics)
     assert "2023-12" == month
     assert analytics_2023_12_01 == analytics["2023-12-01"]
     # non filled should just be []
