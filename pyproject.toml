@@ -39,11 +39,10 @@ name = "invenio-analytics-importer"
 readme = "README.md"
 requires-python = ">=3.9"
 urls = {Repository = "https://github.com/galterlibrary/invenio-analytics-importer"}
-version = "0.1.0"
+version = "0.2.0"
 
 [project.entry-points."flask.commands"]
 analytics_importer = "invenio_analytics_importer.cli:analytics"
-
 
 [project.optional-dependencies]
 dev = [
